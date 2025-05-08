@@ -1,0 +1,43 @@
+pipeline{
+
+    agent { label 'linuxnode3'}
+
+
+    environment{
+        SERVER_IP = ''
+        NEXUS_CREDENTIALS = 'nexus'
+    }
+
+
+    stages{
+        stage('Downloading Artifact from Nexus repository'){
+            steps{
+                withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]){
+            sh 'curl -u ${NEXUS_USER}:${NEXUS_PASS} -O http://${SERVER_IP}:8081/repository/maven-releases/com/example/myapp/1.0.0/myapp-1.0.0.tar.gz'
+            }
+         }
+      }
+
+        stage('Untar tar file'){
+            steps{
+                sh 'mkdir myapp'
+                sh 'tar -xzvf myapp-1.0.0.tar.gz -C myapp/'
+            }
+         }
+
+        stage('Copying Artifact into Nginx directory'){ 
+            steps{
+                sh 'cp -r myapp/* /var/www/html'
+            } 
+         }  
+
+        stage('Restarting Nginx service'){
+            steps{
+                sh 'sudo systemctl restart nginx'
+            }
+         }
+
+
+    }
+
+}

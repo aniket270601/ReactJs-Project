@@ -1,0 +1,20 @@
+1. Grant devops user Permission to Restart Nginx
+Modify the systemd service permissions so that devops can restart Nginx without sudo.
+
+Step 1: Create a Systemd Override for Nginx
+Run the following command:
+
+sudo systemctl edit nginx
+This will open an editor. Add the following content:
+
+
+[Service]
+ExecStartPost=/bin/chown devops:devops /run/nginx.pid
+Save and exit.
+
+Step 2: Reload Systemd to Apply Changes
+
+sudo systemctl daemon-reexec
+
+
+2. Verify that devops user has permissions to /var/www/html
