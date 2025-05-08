@@ -1,0 +1,90 @@
+pipeline{
+    agent { label 'linuxnode2' }
+
+    tools{ 
+        nodejs 'npm'
+    }
+
+
+    environment {
+        NEXUS_URL = 'localhost:8081'
+        NEXUS_CREDENTIALS = 'nexus'  // Jenkins credentials ID
+        REPO = 'maven-releases'  // or 'maven-snapshots' depending on your case
+        GROUP_ID = 'com.example'
+        ARTIFACT_ID = 'myapp'
+        VERSION = '1.0.0'
+        FILE_PATH = '/opt/jenkins/workspace/nodejs/dist/myapp.tar.gz'  // Path to your artifact file
+    }
+
+
+    stages{
+      stage("clone"){
+        steps{
+           git(
+               branch: 'main',
+               url: 'https://github.com/aniket270601/ReactJs-Project.git',
+               credentialsId: 'GIT-PAT'
+           )
+        }
+      }
+
+      stage("Install dependencies"){
+        steps{
+          sh 'npm install'
+        }
+      }
+
+      
+
+      stage("Build"){
+        steps{
+          sh 'npm run build'
+        }
+      }
+
+      stage("Creating a compressed archive"){
+        steps{
+          dir('dist'){
+          sh 'tar -czvf myapp.tar.gz *'  
+          }
+          
+        }
+
+      }
+
+      stage('Upload Artifact to Nexus') {
+            steps {
+                dir('dist'){
+                    nexusArtifactUploader(
+                       nexusVersion: 'nexus3',
+                        protocol: 'http',
+                        nexusUrl: env.NEXUS_URL,
+                        groupId: env.GROUP_ID,
+                        version: env.VERSION,
+                        repository: env.REPO,
+                        credentialsId: env.NEXUS_CREDENTIALS,
+                        artifacts: [
+                            [
+                                artifactId: env.ARTIFACT_ID,
+                                file: 'myapp.tar.gz',
+                                type: 'tar.gz'
+                            ]
+                        ]
+                    )
+                }
+            }
+        }
+                         
+                        
+                        
+                    
+                
+            
+        
+
+      
+
+      
+    }
+    
+}
